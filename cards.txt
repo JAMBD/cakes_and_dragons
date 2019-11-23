@@ -1,0 +1,45 @@
+Game rules:
+Beginning state: each player places two people tokens on the starting crop tile. 
+Nothing can be placed on top of a creature unless a skill card allows it.
+Players cannot be on top of a creature.
+Stacks cannot exceed 5 tiles at end of turn.
+If there are exposed hostile creatures, no items may be picked up or places on the tile unless a skill card allows.
+
+Base skills:
+Pickup top slice on as many stacks in a tile.
+Move player along a valid path up to 12 places. You may add one random tile.
+Place any number of slices in the tile that the player is on.
+[tree] > [work, work, wood]
+[stone, wood] > [work, work, work, skill_card]
+[wood, wood] > [work, work, work, torch]
+
+Skill cards:
+[cherry, egg, 2 x wheat] > [cake]
+[water, wheat] > [3 x wheat]
+[chicken, wheat] > [chicken, egg] | [barn, chickn, egg] > [chicken]
+H(rock, water, rock) > well | (*, *, *, *, *, well) > (water, water, water, water, water, well)
+(torch, bat, _) > (torch, _, bat) & H(bat, cherry) > H(bat, -)
+allow [stone, spider]
+[barn, player, player, gem] > [barn, player, player, player]
+[axe, tree] > [work, work, axe, wood, wood, wood, wood]
+[dagger, wood] > [skill_card, dagger]
+([wood, wood, wood, wood, stone], [torch, stone], [wood, wood, wood, wood, stone]) > (_, [work, work, work, work, barn], _)
+[water, water, cherry] > [work, work, tree]
+[water, water, tree] > [work, work, work, tree, cherry]
+Pay a gold to move a wagon up to 15 / pieces on top rounded up.
+Sneak, allow to be on a creature once during your move.
+Theift use a pickup action and a sneak to pickup just the first item under the player token, no other player tokens may pickup if this is used.
+
+Win conditions:
+Allow placing of cake on a dragon tile & (dragon, cake, cake, cake, cake, cake) > made a dragon friend _/~~~="< @ @ @ @ @
+[barn, dragon, egg] > [dragon, dragon] hatched a baby dragon
+
+
+
+Notes:
++++++++++++ stones everywhere plzzzzzzz
++ probability of finding axe in dungeon, farm
+Way to get stuff on a tile with dragon
+tone down the bats
+have a way to bootstrap skills
+
