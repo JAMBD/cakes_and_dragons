@@ -32,7 +32,7 @@ Theift use a pickup action and a sneak to pickup just the first item under the p
 
 Win conditions:
 Allow placing of cake on a dragon tile & (dragon, cake, cake, cake, cake, cake) > made a dragon friend _/~~~="< @ @ @ @ @
-[barn, dragon, egg] > [dragon, dragon] hatched a baby dragon
+[barn, dragon, egg] > [dragon, dragon] hatched a baby dragon, allow putting egg on dragon and build barn around dragon
 
 
 

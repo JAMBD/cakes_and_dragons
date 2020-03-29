@@ -33,8 +33,8 @@ class Game(object):
         self._clock = pygame.time.Clock()
 
         self._fpsClock = pygame.time.Clock()
-        self._screen = pygame.display.set_mode((800, 600))
-        #self._screen = pygame.display.set_mode((0,0), pygame.FULLSCREEN)
+        #self._screen = pygame.display.set_mode((800, 600))
+        self._screen = pygame.display.set_mode((0,0), pygame.FULLSCREEN)
         self._surface = pygame.Surface(self._screen.get_size())
         self._surface = self._surface.convert()
         self._clear()
@@ -99,17 +99,24 @@ class Game(object):
                     (self._selected_slices and not self._selected_slices[0].type)):
                     if event.key == K_BACKSPACE:
                         self._select_text =  self._select_text[:-1]
+                    elif event.key == K_DELETE:
+                        self._select_text = ""
                     elif event.key == K_RETURN:
                         if self._selected_tile:
                             valid_names = [i.name for i in Tile.Type if self._select_text.upper() in i.name]
                             if valid_names:
                                 self._selected_tile.type = Tile.Type[valid_names[0]]
-                                self._select_text = ""
                         elif self._selected_slices:
                             valid_names = [i for i in Slice.types if self._select_text.upper() in i]
                             if valid_names:
-                                self._selected_slices[0].type = valid_names[0]
-                                self._select_text = ""
+                                for s in self._selected_slices:
+                                    s.type = valid_names[0]
+                    elif self._selected_slices and not (self._select_text and self._select_text[-1] == "_") and event.unicode.isnumeric():
+                        num = int(event.unicode)
+                        if self._selected_slices and 0 < num <= 5:
+                            self._selected_slices = []
+                            for _ in range(num):
+                                self._selected_slices.append(Slice())
                     else:
                         self._select_text += event.unicode
                 else:
@@ -241,6 +248,7 @@ class Game(object):
         num_tiles = int(np.ceil(screen_size[0] / (HEX_RADIUS * self.zoom) / 3)) + 1
 
         tiles_to_draw = []
+        tile_y = []
         for u in list(range(-num_tiles, num_tiles)):
             for v in list(range(-num_tiles, num_tiles)):
                 tile_center = hexToSquare(u, v)
@@ -263,11 +271,16 @@ class Game(object):
                                   list(zip(pnts_x, pnts_y)), BG_LINE_WIDTH)
                 if tile_id in self.tiles:
                     tile = tile_id
+                    tile_y.append(tile_center[1])
                     tiles_to_draw.append((tile, (self._surface, tile_center, self.zoom)))
-
+        y_ord = np.argsort(tile_y)
         for tile_id, args in tiles_to_draw:
             self.tiles[tile_id].draw(*args)
+        for i in y_ord:
+            (tile_id, args) = tiles_to_draw[i]
+            self.tiles[tile_id].draw_slices(*args)
         self._expand_center = None
+        slice_to_draw = []
         for tile_id, args in tiles_to_draw:
             if self._expanded_slice and self._expanded_slice[0] == tile_id:
                 tile_pos, ang, slices = self._expanded_slice
@@ -277,8 +290,9 @@ class Game(object):
                 trig_y = (HEX_RADIUS * self.zoom - BG_LINE_WIDTH) * np.tan(np.pi / 6) * np.sin(real_ang * np.pi/3 + np.pi / 6) + center[1]
                 self._expand_center = (trig_x, trig_y)
                 for idx, i in enumerate(slices):
-                    i.draw(self._surface, (trig_x, trig_y - (idx + 0.5) * self.zoom * HEX_RADIUS/2 ) , real_ang * np.pi/3  , self.zoom, (len(slices) - 1) - idx)
-
+                    slice_to_draw.append((i, (self._surface, (trig_x, trig_y - (idx + 0.5) * self.zoom * HEX_RADIUS/2 ) , real_ang * np.pi/3  , self.zoom, (len(slices) - 1) - idx)))
+        for i, args in slice_to_draw:
+            i.draw(*args)
         if self._selected_slices or self._selected_tile:
             mouse_pos = pygame.mouse.get_pos()
             if self._selected_slices:
@@ -318,7 +332,7 @@ class Game(object):
 
 class Slice(object):
     types = []
-    
+    images = {}
     def __init__(self):
         if not self.types:
             for f in os.listdir("./slice_images/"):
@@ -335,8 +349,13 @@ class Slice(object):
         pygame.draw.polygon(surface, (210 - 20  * depth, 210 - 20 * depth, 210 - 20 * depth),
                           list(zip(trig_pnts_x, trig_pnts_y)), 0)
         if self.type and draw_img:
-            if os.path.isfile("./slice_images/%s.png" % self.type.lower()):
-                img_surf = pygame.image.load("./slice_images/%s.png" % self.type.lower())
+            name = "./slice_images/%s.png" % self.type.lower()
+            if name not in self.images:
+                if os.path.isfile(name):
+                    self.images[name] = pygame.image.load("./slice_images/%s.png" % self.type.lower())
+            
+            if name in self.images:
+                img_surf = self.images[name]
                 img_length = int(np.round(trig_length * np.sin(np.pi / 6) * 2))
                 img_surf = pygame.transform.scale(img_surf, (img_length, img_length))
                 img_rect = img_surf.get_rect()
@@ -368,15 +387,15 @@ class Tile(object):
             self.type = selection[np.random.randint(len(selection))]
             if self.type == Tile.Type.FOREST:
                 probs = [
-                        [""] * 10 + ["bat"] * 5 + ["gold"] + ["tree"] * 50 + ["water"] * 20
+                        [""] * 10 + ["bat"] * 5 + ["gold"] + ["tree"] * 50 + ["water"] * 20 + ["stone"] * 7
                         ] * 6
             elif self.type == Tile.Type.CROP:
                 probs = [
-                        [""] * 10 + ["wheat"] * 25 + ["tree"] * 5 + ["wagon"] * 5 + ["water"] * 20 + ["chicken"] * 10 + ["egg"] * 2 + ["axe"] * 5
+                        [""] * 10 + ["wheat"] * 25 + ["tree"] * 5 + ["wagon"] * 5 + ["water"] * 20 + ["chicken"] * 10 + ["egg"] * 2 + ["axe"] * 7 + ["stone"] * 2
                         ] * 6
             elif self.type == Tile.Type.DUNGEON:
                 probs = [
-                        [""] * 10 + ["bat"] * 20 + ["gold"] * 5 + ["dagger"] * 5 + ["gem"] * 5 + ["dragon"] * 2 + ["torch"] * 5 + ["spider"] * 10 + ["stone"] * 10
+                        [""] * 7 + ["bat"] * 20 + ["gold"] * 5 + ["dagger"] * 5 + ["gem"] * 5 + ["dragon"] * 2 + ["torch"] * 5 + ["spider"] * 10 + ["stone"] * 10
                         ] * 6
             for idx, s in enumerate(probs):
                 type_name = s[np.random.randint(len(s))]
@@ -418,6 +437,11 @@ class Tile(object):
             pygame.draw.polygon(surface, colour,
                               list(zip(trig_pnts_x, trig_pnts_y)), BG_LINE_WIDTH)
 
+    def draw_slices(self, surface, tile_center, zoom):
+        angles = np.array([(i + self.rotation) * (np.pi / 3.0) for i in range(6)])
+        trig_x = (HEX_RADIUS * zoom - BG_LINE_WIDTH) * np.tan(np.pi / 6) * np.cos(angles + np.pi / 6) + tile_center[0]
+        trig_y = (HEX_RADIUS * zoom - BG_LINE_WIDTH) * np.tan(np.pi / 6) * np.sin(angles + np.pi / 6) + tile_center[1]
+        sorted_idx = np.argsort(trig_y)
         for i in sorted_idx:
             center = (trig_x[i], trig_y[i])
             trig_rot = angles[i]
@@ -428,6 +452,7 @@ class Tile(object):
 
 
 def main():
+    np.random.seed()
     game = Game()
     if os.path.isfile("./game_state"):
         with open("./game_state", "rb") as f:
